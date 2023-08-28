@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  ipfs:
+    image: ipfs_client:latest
+    # container_name: ipfs_client
+    build: ./
+    ports: 
+      - '3000:3000'
