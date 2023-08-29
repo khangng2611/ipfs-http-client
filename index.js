@@ -23,7 +23,7 @@ app.post('/upload', (req, res) => {
     const image = req.files.image;
     const name = "temp-name";
 
-    const filePath = 'files/' + name;
+    const filePath = './files/' + name;
     image.mv(filePath, async (err) => {
         if (err) {
             console.log("Fail to download file !");
