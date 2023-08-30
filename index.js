@@ -6,7 +6,7 @@ const fs = require('fs');
 
 const app = express();
 const ipfs = ipfsClient.create({
-    host: '172.21.17.163:5001/api/v0/add',
+    host: '127.0.0.1',
     port: '5001',
     protocol: 'http'
 });
@@ -20,22 +20,50 @@ app.get('/', (req,res) => {
 });
 
 app.post('/upload', (req, res) => {
-    const image = req.files.image;
-    const name = "temp-name";
-
-    const filePath = './files/' + name;
-    image.mv(filePath, async (err) => {
-        if (err) {
-            console.log("Fail to download file !");
-            return res.status(500).send(err);
+    if (req.files == null) {
+        error = 'No files to upload !';
+        res.status(500).send({error});
+    }
+    else {
+        const images = (req.files.image.length >= 2) ? req.files.image : [req.files.image];
+        console.log(images);
+        const hashes = [];
+        const promises = [];
+        for (const image of images) {
+            const name = image.name;
+            const filePath = 'files/' + name;
+            const promise = new Promise((resolve, reject) => {
+                image.mv(filePath, async (err) => {
+                    if (err) {
+                        console.log("Fail to download file !");
+                        reject(err);
+                    }
+                    const hash = await addFile(name, filePath);
+                    fs.unlink(filePath, (err) => {
+                        if (err) console.log(err);
+                        reject(err);
+                    })
+                    const url = "http://127.0.0.1:8080/ipfs/" + hash;
+                    hashes.push({'name' : name, 'hash' : hash, 'url' : url});
+                    resolve();
+                });
+            });
+            promises.push(promise);
         }
-        const hash = await addFile(name, filePath);
-        const image_url = "http://172.21.17.163:8080/ipfs/" + hash;
-        fs.unlink(filePath, (err) => {
-            if (err) console.log(err);
-        })
-        res.send({image_url});
-    });
+        Promise.all(promises)
+            .then(() => {
+                res.send(hashes);
+            })
+            .catch((error) => {
+                res.status(500).send({error});
+            });
+    }
+});
+
+app.get('/get/:cid', (req, res) => {
+    const hash = req.params.cid;
+    const link = "http://127.0.0.1:8080/ipfs/" + hash;
+    res.redirect(link);
 });
 
 const addFile = async (fileName, filePath) => {
@@ -47,6 +75,8 @@ const addFile = async (fileName, filePath) => {
     const fileHash = filedAdded.cid.toString();
     return fileHash;
 }
+
+
 
 app.listen(3000, () => {
     console.log("Listen on 3000");
