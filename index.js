@@ -5,8 +5,13 @@ const fileUpload = require('express-fileupload');
 const fs = require('fs');
 
 const app = express();
+// const ipfs = ipfsClient.create({
+//     host: '127.0.0.1',
+//     port: '5001',
+//     protocol: 'http'
+// });
 const ipfs = ipfsClient.create({
-    host: '127.0.0.1',
+    host: '172.21.17.163:5001/api/v0/add',
     port: '5001',
     protocol: 'http'
 });
@@ -31,7 +36,8 @@ app.post('/upload', (req, res) => {
         const promises = [];
         for (const image of images) {
             const name = image.name;
-            const filePath = 'files/' + name;
+            // const filePath = 'files/' + name;
+            const filePath = name;
             const promise = new Promise((resolve, reject) => {
                 image.mv(filePath, async (err) => {
                     if (err) {
@@ -43,7 +49,8 @@ app.post('/upload', (req, res) => {
                         if (err) console.log(err);
                         reject(err);
                     })
-                    const url = "http://127.0.0.1:8080/ipfs/" + hash;
+                    // const url = "http://127.0.0.1:8080/ipfs/" + hash;
+                    const url = "https://e23-stag.atomsolution.vn/ipfs-get/ipfs/" + hash;
                     hashes.push({'name' : name, 'hash' : hash, 'url' : url});
                     resolve();
                 });
@@ -60,11 +67,11 @@ app.post('/upload', (req, res) => {
     }
 });
 
-app.get('/get/:cid', (req, res) => {
-    const hash = req.params.cid;
-    const link = "http://127.0.0.1:8080/ipfs/" + hash;
-    res.redirect(link);
-});
+// app.get('/get/:cid', (req, res) => {
+//     const hash = req.params.cid;
+//     const link = "http://127.0.0.1:8080/ipfs/" + hash;
+//     res.redirect(link);
+// });
 
 const addFile = async (fileName, filePath) => {
     const file = fs.readFileSync(filePath);
